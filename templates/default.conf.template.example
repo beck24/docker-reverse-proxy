@@ -1,0 +1,31 @@
+server {
+  listen 80 default_server;
+  server_name dyp.localhost;
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  server_name dyp.localhost;
+
+  ssl_certificate     /etc/letsencrypt/dyp.localhost+2.pem;
+  ssl_certificate_key /etc/letsencrypt/dyp.localhost+2-key.pem;
+
+  location / {
+
+    proxy_set_header        Host $host;
+    proxy_set_header        X-Real-IP $remote_addr;
+    proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header        X-Forwarded-Proto $scheme;
+
+    proxy_pass          http://host.docker.internal:8081;
+    proxy_read_timeout  90;
+
+    proxy_redirect      http://host.docker.internal:8081 https://dyp.localhost;
+  }
+
+  error_page 500 502 503 504 /50x.html;
+  location = /50x.html {
+    root /usr/share/nginx/html;
+  }
+}
